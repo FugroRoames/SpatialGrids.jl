@@ -1,5 +1,6 @@
 using SpatialGrids
+using StaticArrays
+using PointClouds
 using Base.Test
 
-# write your own tests here
-@test 1 == 2
+include("spatial_grid_test.jl")
