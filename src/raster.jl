@@ -1,16 +1,13 @@
 """
-    rasterize_points(cloud::PointCloud, dx::AbstractFloat)
-    rasterize_points(cloud::Matrix{<:AbstractFloat}, dx::AbstractFloat)
+    rasterize_points(points, dx::AbstractFloat)
 
 Rasterize points in 2D by a cell size `dx`.
 Returns a dictionary containing the indices points that are in a cell.
-
 """
 immutable Raster <: Associative
     pixels::Dict{Tuple{Int,Int}, Vector{Int}}
 end
 
-# TODO points should be able to be any matrix
 function rasterize_points{T <: AbstractVector}(points::Vector{T}, dx::AbstractFloat)
     min_xy = SVector{3, Float64}(minimum(map(x->x[1], points)), minimum(map(x->x[2], points)), 0) # TODO do this better!
     pixels = Dict{Tuple{Int, Int}, Vector{Int}}()
@@ -26,10 +23,6 @@ function rasterize_points{T <: AbstractVector}(points::Vector{T}, dx::AbstractFl
         end
     end
     return Raster(pixels)
-end
-
-function rasterize_points(cloud::PointCloud, dx::AbstractFloat)
-    rasterize_points(positions(cloud), dx)
 end
 
 function rasterize_points{T <: Number}(points::Matrix{T}, dx::AbstractFloat)

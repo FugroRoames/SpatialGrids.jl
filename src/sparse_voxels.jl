@@ -98,10 +98,6 @@ function get_voxel_size{T <: Number}(voxel_size::NTuple{3, T})
     SVector{3, T}(voxel_size)
 end
 
-# Voxelize point cloud
-# TODO decide whether we want Pointloud to be a dependency?
-SparseVoxelGrid(cloud::PointCloud, voxel_size) = SparseVoxelGrid(positions(cloud), voxel_size)
-
 Base.length(grid::SparseVoxelGrid) = length(grid.voxel_info)
 Base.isempty(grid::SparseVoxelGrid) = isempty(grid.voxel_info)
 Base.haskey(grid::SparseVoxelGrid, k) = haskey(grid.voxel_info, k)
@@ -121,6 +117,8 @@ function make_voxel_id(points::AbstractVector, voxel_size::SVector)
     (floor(Int, points[1] / voxel_size[1]), floor(Int, points[2] / voxel_size[2]),
      floor(Int, points[3] / voxel_size[3]))
 end
+
+
 
 "An iterator type to return point indices in a voxel. See SparseVoxelGrid() for usage."
 immutable Voxel

@@ -9,15 +9,10 @@
         points[3, cnt] = k
         cnt += 1
     end
-    cloud = PointCloud(points)
 
     @testset "Rasterizer" begin
         # Test standard uniformly sized voxels
         d = rasterize_points(points, 1.0)
-        [@test length(r) == 3 for r in values(d)]
-
-        # Test a point cloud
-        d = rasterize_points(cloud, 1.0)
         [@test length(r) == 3 for r in values(d)]
     end
 
@@ -30,13 +25,8 @@
         @test length(grid) == 27
         @test length(collect(grid)) == 27
         [@test length(collect(voxel)) == 1 for voxel in grid]
-
-        grid = SparseVoxelGrid(cloud, voxel_size)
-        [@test length(collect(voxel)) == 1 for voxel in grid]
         @test voxel_center(grid, (1, 1, 1)) == SVector{3,Float64}(0.5, 0.5, 0.5)
-
-        # Test voxels with different side lengths in each axis
-        @test length(collect(SparseVoxelGrid(cloud, (2.0, 2.5, 4.0)))) == 4
+        @test length(collect(SparseVoxelGrid(points, (2.0, 2.5, 4.0)))) == 4
     end
 
     @testset "Neighbouring voxel" begin
