@@ -1,3 +1,4 @@
+using StaticArrays
 
 typealias VoxelId NTuple{3, Int}
 
