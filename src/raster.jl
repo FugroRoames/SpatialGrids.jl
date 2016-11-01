@@ -1,3 +1,5 @@
+using StaticArrays
+
 """
     rasterize_points(points, dx::AbstractFloat)
 
@@ -6,10 +8,19 @@ Returns a dictionary containing the indices points that are in a cell.
 """
 immutable Raster <: Associative
     pixels::Dict{Tuple{Int,Int}, Vector{Int}}
+    r_min::SVector{3, Float64}
+    r_max::SVector{3, Float64}
+    cellsize::Float64
 end
 
+"""
+`rasterize_points{T <: AbstractVector}(points::Vector{T}, dx::AbstractFloat) -> Raster`
+
+Returns `Raster` of  points `pos` with quadratic cellsize `dx`
+"""
 function rasterize_points{T <: AbstractVector}(points::Vector{T}, dx::AbstractFloat)
     min_xy = SVector{3, Float64}(minimum(map(x->x[1], points)), minimum(map(x->x[2], points)), 0) # TODO do this better!
+    max_xy = SVector{3, Float64}(maximum(map(x->x[1], points)), maximum(map(x->x[2], points)), 0) # TODO do this better!
     pixels = Dict{Tuple{Int, Int}, Vector{Int}}()
     inv_dx = 1.0/dx
     for i = 1:length(points)
@@ -22,7 +33,7 @@ function rasterize_points{T <: AbstractVector}(points::Vector{T}, dx::AbstractFl
             push!(pixels[key], i)
         end
     end
-    return Raster(pixels)
+    return Raster(pixels,min_xy,max_xy,dx)
 end
 
 function rasterize_points{T <: Number}(points::Matrix{T}, dx::AbstractFloat)
