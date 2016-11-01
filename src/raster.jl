@@ -6,12 +6,42 @@ using StaticArrays
 Rasterize points in 2D by a cell size `dx`.
 Returns a dictionary containing the indices points that are in a cell.
 """
-immutable Raster <: Associative
+immutable Raster{T<:SVector} <: Associative
     pixels::Dict{Tuple{Int,Int}, Vector{Int}}
-    r_min::SVector{3, Float64}
-    r_max::SVector{3, Float64}
+    r_min::T
+    r_max::T
     cellsize::Float64
 end
+
+# from: https://github.com/andyferris/HeightOrderedGrid.jl/blob/master/src/HeightOrderedGrid.jl
+# as opposed to: SVector{N, Float64}(minimum(map(x->x[1], points)), minimum(map(x->x[2], points)), 0)
+function bounds{T}(points::Vector{T})
+    xmin = typemax(eltype(eltype(T)))
+    xmax = typemin(eltype(eltype(T)))
+    ymin = typemax(eltype(eltype(T)))
+    ymax = typemin(eltype(eltype(T)))
+
+    for p ∈ points
+        @inbounds x = p[1]
+        if x < xmin
+            xmin = x
+        end
+        if x > xmax
+            xmax = x
+        end
+
+        @inbounds y = p[2]
+        if y < ymin
+            ymin = y
+        end
+        if y > ymax
+            ymax = y
+        end
+    end
+
+    return (xmin, xmax, ymin, ymax)
+end
+
 
 """
 `rasterize_points{T <: AbstractVector}(points::Vector{T}, dx::AbstractFloat) -> Raster`
@@ -19,8 +49,18 @@ end
 Returns `Raster` of  points `pos` with quadratic cellsize `dx`
 """
 function rasterize_points{T <: AbstractVector}(points::Vector{T}, dx::AbstractFloat)
-    min_xy = SVector{3, Float64}(minimum(map(x->x[1], points)), minimum(map(x->x[2], points)), 0) # TODO do this better!
-    max_xy = SVector{3, Float64}(maximum(map(x->x[1], points)), maximum(map(x->x[2], points)), 0) # TODO do this better!
+    (xmin, xmax, ymin, ymax) = bounds(points)
+
+    if size(eltype(points))[1] == 2
+        min_xy = eltype(points)(xmin, ymin)
+        max_xy = eltype(points)(xmax, ymax)
+    elseif size(eltype(points))[1] == 3
+        min_xy = eltype(points)(xmin, ymin, 0)
+        max_xy = eltype(points)(xmax, ymax, 0)
+    else
+        throw("Unsupported input point dimensions")
+    end
+
     pixels = Dict{Tuple{Int, Int}, Vector{Int}}()
     inv_dx = 1.0/dx
     for i = 1:length(points)
