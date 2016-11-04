@@ -6,8 +6,8 @@ using StaticArrays
 Rasterize points in 2D by a cell size `dx`.
 Returns a dictionary containing the indices points that are in a cell.
 """
-immutable Raster{T<:SVector} <: Associative
-    pixels::Dict{Tuple{Int,Int}, Vector{Int}}
+immutable Raster{T<:SVector,U<:Integer} <: Associative
+    pixels::Dict{Tuple{U,U}, Vector{U}}
     r_min::T
     r_max::T
     cellsize::Float64
@@ -61,15 +61,15 @@ function rasterize_points{T <: AbstractVector}(points::Vector{T}, dx::AbstractFl
         throw("Unsupported input point dimensions")
     end
 
-    pixels = Dict{Tuple{Int, Int}, Vector{Int}}()
+    pixels = Dict{Tuple{UInt32, UInt32}, Vector{UInt32}}()
     inv_dx = 1.0/dx
     for i = 1:length(points)
         @inbounds p = points[i] - min_xy
-        key = (floor(Int, p[1]*inv_dx), floor(Int, p[2]*inv_dx))
+        key = (floor(UInt32, p[1]*inv_dx), floor(UInt32, p[2]*inv_dx))
         if haskey(pixels, key)
             push!(pixels[key], i)
         else
-            pixels[key] = Vector{Int}()
+            pixels[key] = Vector{UInt32}()
             push!(pixels[key], i)
         end
     end
@@ -80,7 +80,7 @@ function rasterize_points{T <: Number}(points::Matrix{T}, dx::AbstractFloat)
     ndim = size(points, 1)
     npoints = size(points, 2)
     if isbits(T)
-        new_data = reinterpret(SVector{ndim, T}, points, (length(points) ÷ ndim, ))
+        new_data = reinterpret(SVector{ndim, T}, points, (npoints,))
     else
         new_data = SVector{ndim, T}[SVector{ndim, T}(points[:, i]) for i in 1:npoints]
     end
