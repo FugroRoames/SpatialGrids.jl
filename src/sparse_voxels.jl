@@ -40,7 +40,7 @@ immutable SparseVoxelGrid{T <: Number}
     point_indices::Vector{Int}
 end
 
-function SparseVoxelGrid{T <: AbstractVector}(points::Vector{T}, voxel_size)
+function SparseVoxelGrid{T <: AbstractVector}(points::Vector{T}, voxel_size; min_points = nothing)
     voxel_size = get_voxel_size(voxel_size)
     npoints = length(points)
     # ndims != 3 && throw(ArgumentError("Points dimensions are $(size(points)), should be a 3xN matrix."))
@@ -50,7 +50,7 @@ function SparseVoxelGrid{T <: AbstractVector}(points::Vector{T}, voxel_size)
     # Assign each point to a voxel id
     voxel_ids = Vector{VoxelId}(npoints)
     for j = 1:npoints
-        @inbounds voxel_ids[j] = make_voxel_id(points[j], voxel_size)
+        @inbounds voxel_ids[j] = make_voxel_id(points[j], voxel_size, min_points)
     end
 
     # Count the number of points in each voxel
@@ -80,7 +80,7 @@ function SparseVoxelGrid{T <: AbstractVector}(points::Vector{T}, voxel_size)
 end
 
 # Convert matrix to Vector{SVector}
-function SparseVoxelGrid{T <: Number}(points::Matrix{T}, voxel_size)
+function SparseVoxelGrid{T <: Number}(points::Matrix{T}, voxel_size; kwargs ...)
     ndim = size(points, 1)
     npoints = size(points, 2)
     if isbits(T)
@@ -88,7 +88,7 @@ function SparseVoxelGrid{T <: Number}(points::Matrix{T}, voxel_size)
     else
         new_data = SVector{ndim, T}[SVector{ndim, T}(points[:, i]) for i in 1:npoints]
     end
-    SparseVoxelGrid(new_data, voxel_size)
+    SparseVoxelGrid(new_data, voxel_size; kwargs...)
 end
 
 function get_voxel_size{T <: Number}(voxel_size::T)
@@ -119,7 +119,15 @@ function make_voxel_id(points::AbstractVector, voxel_size::SVector)
      floor(Int, points[3] / voxel_size[3]))
 end
 
+"""
+    make_voxel_id(points::Matrix, index, voxel_size)
 
+Create a 3D voxel id tuple for the point specified by the column index.
+"""
+function make_voxel_id(points::AbstractVector, voxel_size::SVector, min_points::Vector)
+    (floor(Int, (points[1] - min_points[1]) / voxel_size[1]), floor(Int, (points[2] - min_points[2]) / voxel_size[2]),
+     floor(Int, (points[3] - min_points[3]) / voxel_size[3]))
+end
 
 "An iterator type to return point indices in a voxel. See SparseVoxelGrid() for usage."
 immutable Voxel
