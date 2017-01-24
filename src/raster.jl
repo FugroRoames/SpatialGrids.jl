@@ -65,7 +65,7 @@ function rasterize_points{T <: AbstractVector}(points::Vector{T}, dx::AbstractFl
     inv_dx = 1.0/dx
     for i = 1:length(points)
         @inbounds p = points[i] - min_xy
-        key = (floor(UInt32, p[1]*inv_dx), floor(UInt32, p[2]*inv_dx))
+        key = (floor(UInt32, p[1]*inv_dx)+1, floor(UInt32, p[2]*inv_dx)+1)
         if haskey(pixels, key)
             push!(pixels[key], i)
         else
