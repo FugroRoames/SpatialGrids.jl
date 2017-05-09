@@ -1,6 +1,6 @@
 using StaticArrays
 
-typealias VoxelId NTuple{3, Int}
+const VoxelId = NTuple{3, Int}
 
 """
     SparseVoxelGrid(points, voxel_size)

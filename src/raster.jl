@@ -6,7 +6,7 @@ using StaticArrays
 Rasterize points in 2D by a cell size `dx`.
 Returns a dictionary containing the indices points that are in a cell.
 """
-immutable Raster{T<:SVector,U<:Integer} <: Associative
+immutable Raster{T<:SVector,U<:Integer} <: Associative{T,U}
     pixels::Dict{Tuple{U,U}, Vector{U}}
     r_min::T
     r_max::T
