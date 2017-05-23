@@ -32,7 +32,7 @@
         @test length(collect(SparseVoxelGrid(points3d, SVector(2.0, 2.5, 4.0)))) == 4
 
         vector_points = [SVector{3, Float64}(points3d[:,i]) for i = 1:size(points3d, 2)]
-        grid = SparseVoxelGrid(vector_points, SVector(1.0, 1.0, 1.0))
+        grid = SparseVoxelGrid(vector_points, SVector(1, 1, 1))
         @test length(grid) == 27
     end
 
