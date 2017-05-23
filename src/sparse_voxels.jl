@@ -1,5 +1,3 @@
-using StaticArrays
-
 const VoxelId = NTuple{3, Int}
 
 """
@@ -34,16 +32,14 @@ for voxel in grid
 end
 ```
 """
-immutable SparseVoxelGrid{T <: Number}
+immutable SparseVoxelGrid{T <: Real}
     voxel_size::SVector{3, T}
     voxel_info::Dict{VoxelId, UnitRange{Int}}
     point_indices::Vector{Int}
 end
 
-function SparseVoxelGrid{T <: AbstractVector}(points::Vector{T}, voxel_size)
-    voxel_size = get_voxel_size(voxel_size)
+function SparseVoxelGrid{T1 <: AbstractVector, T2 <: Real}(points::Vector{T1}, voxel_size::SVector{3, T2})
     npoints = length(points)
-    # ndims != 3 && throw(ArgumentError("Points dimensions are $(size(points)), should be a 3xN matrix."))
 
     # In order to avoid allocating a vector for each voxel, we construct the data structure in a backward-looking order.
 
@@ -62,8 +58,10 @@ function SparseVoxelGrid{T <: AbstractVector}(points::Vector{T}, voxel_size)
     # Allocate ranges for the indices of points in each voxel based on the counts
     voxel_info = Dict{VoxelId, UnitRange{Int}}()
     current_index = 1
-    for (group_id, group_size) in group_counts
-        voxel_info[group_id] = current_index:current_index+group_size-1
+    # TODO: Using keys(group_counts) is a workaround for inference in julia-0.5 - let's just iterate over the dictionary in the future
+    for group_id in keys(group_counts)
+        group_size = group_counts[group_id]
+        voxel_info[group_id] = UnitRange(current_index, current_index+group_size-1)
         current_index += group_size
     end
 
@@ -79,25 +77,20 @@ function SparseVoxelGrid{T <: AbstractVector}(points::Vector{T}, voxel_size)
     return SparseVoxelGrid(voxel_size, voxel_info, point_indices)
 end
 
-# Convert matrix to Vector{SVector}
-function SparseVoxelGrid{T <: Number}(points::Matrix{T}, voxel_size)
-    ndim = size(points, 1)
-    npoints = size(points, 2)
-    if isbits(T)
-        new_data = reinterpret(SVector{ndim, T}, points, (length(points) ÷ ndim, ))
-    else
-        new_data = SVector{ndim, T}[SVector{ndim, T}(points[:, i]) for i in 1:npoints]
-    end
-    SparseVoxelGrid(new_data, voxel_size)
+function SparseVoxelGrid{T1 <: Real}(points::Matrix{T1}, voxel_size)
+    ndims, npoints = size(points)
+    @assert ndims == 3
+    new_data = reinterpret(SVector{3, T1}, points, (length(points) ÷ 3, ))
+    SparseVoxelGrid(new_data, get_voxel_size(voxel_size))
 end
 
-function get_voxel_size{T <: Number}(voxel_size::T)
-    SVector{3, T}(voxel_size, voxel_size, voxel_size)
+function SparseVoxelGrid{T1 <: AbstractVector}(points::Vector{T1}, voxel_size)
+    SparseVoxelGrid(points, get_voxel_size(voxel_size))
 end
 
-function get_voxel_size{T <: Number}(voxel_size::NTuple{3, T})
-    SVector{3, T}(voxel_size)
-end
+get_voxel_size{T <: Real}(voxel_size::NTuple{3, T})  = SVector{3, T}(voxel_size)
+get_voxel_size{T <: Real}(voxel_size::T)             = SVector{3, T}(voxel_size, voxel_size, voxel_size)
+get_voxel_size{T <: Real}(voxel_size::SVector{3, T}) = voxel_size
 
 Base.length(grid::SparseVoxelGrid) = length(grid.voxel_info)
 Base.isempty(grid::SparseVoxelGrid) = isempty(grid.voxel_info)
@@ -110,16 +103,14 @@ function Base.show(io::IO, grid::SparseVoxelGrid)
 end
 
 """
-    make_voxel_id(points::Matrix, index, voxel_size)
+    make_voxel_id(point::AbstractVector, voxel_size::SVector{3,AbstractFloat})
 
-Create a 3D voxel id tuple for the point specified by the column index.
+Create the voxel id for a given point and voxel size.
 """
-function make_voxel_id(points::AbstractVector, voxel_size::SVector)
-    (floor(Int, points[1] / voxel_size[1]), floor(Int, points[2] / voxel_size[2]),
-     floor(Int, points[3] / voxel_size[3]))
+@inline function make_voxel_id{T <: Real}(point::AbstractVector, voxel_size::SVector{3, T})
+    (floor(Int, point[1] / voxel_size[1]), floor(Int, point[2] / voxel_size[2]),
+     floor(Int, point[3] / voxel_size[3]))
 end
-
-
 
 "An iterator type to return point indices in a voxel. See SparseVoxelGrid() for usage."
 immutable Voxel
@@ -146,13 +137,12 @@ function Base.next(v::Voxel, state)
     v.all_point_indices[v.point_index_range[state]], state + 1
 end
 Base.done(v::Voxel, state) = state > length(v.point_index_range)
+
 Base.eltype(::Voxel) = Int
 Base.length(v::Voxel) = length(v.point_index_range)
 function Base.show(io::IO, v::Voxel)
     print(io, typeof(v), " ", v.id, " with ", length(v.point_index_range), " points")
 end
-
-
 
 "Voxel iterator that returns the `Voxel`s. See `in_cuboid()` for usage."
 immutable VoxelCuboid
@@ -262,6 +252,6 @@ end
 
 Calculate the centre point for the `voxel_id` in the spatial grid.
 """
-function voxel_center(grid::SparseVoxelGrid, voxel_id::VoxelId)
+@inline function voxel_center(grid::SparseVoxelGrid, voxel_id::VoxelId)
     center = SVector{3, Float64}(voxel_id) .* grid.voxel_size - grid.voxel_size * 0.5
 end
