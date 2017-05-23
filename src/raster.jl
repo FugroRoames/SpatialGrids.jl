@@ -4,7 +4,7 @@
 Rasterize points in 2D by a cell size `dx`.
 Returns a dictionary containing the indices points that are in a cell.
 """
-immutable Raster{T<:SVector,U<:Integer} <: Associative{T,U}
+immutable Raster{T<:SVector,U<:Integer}
     pixels::Dict{Tuple{U,U}, Vector{U}}
     r_min::T
     r_max::T
@@ -56,7 +56,7 @@ function rasterize_points{T <: AbstractVector}(points::Vector{T}, dx::AbstractFl
         min_xy = eltype(points)(xmin, ymin, 0)
         max_xy = eltype(points)(xmax, ymax, 0)
     else
-        throw("Unsupported input point dimensions")
+        throw(DimensionMismatch("Unsupported input point dimensions"))
     end
 
     pixels = Dict{Tuple{UInt32, UInt32}, Vector{UInt32}}()
@@ -75,16 +75,19 @@ function rasterize_points{T <: AbstractVector}(points::Vector{T}, dx::AbstractFl
 end
 
 function rasterize_points{T <: Number}(points::Matrix{T}, dx::AbstractFloat)
+    @assert isbits(T)
     ndim = size(points, 1)
     npoints = size(points, 2)
-    if isbits(T)
-        new_data = reinterpret(SVector{ndim, T}, points, (npoints,))
-    else
-        new_data = SVector{ndim, T}[SVector{ndim, T}(points[:, i]) for i in 1:npoints]
-    end
+    new_data = reinterpret(SVector{ndim, T}, points, (npoints,))
     rasterize_points(new_data, dx)
 end
 
 Base.keys(r::Raster) = keys(r.pixels)
 Base.values(r::Raster) = values(r.pixels)
 Base.getindex(r::Raster, ind) = r.pixels[ind]
+
+function Base.show{T,U}(io::IO, raster::Raster{T,U})
+    println(io, typeof(raster))
+    println(io, "  Number of pixels: ", length(raster.pixels))
+    print(io, "  Cellsize: ", raster.cellsize)
+end

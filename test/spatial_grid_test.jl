@@ -17,6 +17,14 @@
         [@test length(r) == 3 for r in values(d2d)]
         d3d = rasterize_points(points3d, 1.0)
         [@test length(r) == 3 for r in values(d3d)]
+
+        @test length(keys(d2d)) == 9
+        @test d2d[(0x00000000,0x00000000)] == UInt32[1, 2, 3]
+
+        @test_throws DimensionMismatch rasterize_points([SVector{4, Float32}(rand(4)) for i= 1:4], 1.0)
+
+        io = IOBuffer()
+        show(io, d3d)
     end
 
     @testset "Voxelization" begin
@@ -29,7 +37,7 @@
         @test length(collect(grid)) == 27
         [@test length(collect(voxel)) == 1 for voxel in grid]
         @test voxel_center(grid, (1, 1, 1)) == SVector{3,Float64}(0.5, 0.5, 0.5)
-        @test length(collect(SparseVoxelGrid(points3d, SVector(2.0, 2.5, 4.0)))) == 4
+        @test length(collect(SparseVoxelGrid(points3d, (2.0, 2.5, 4.0)))) == 4
 
         vector_points = [SVector{3, Float64}(points3d[:,i]) for i = 1:size(points3d, 2)]
         grid = SparseVoxelGrid(vector_points, SVector(1, 1, 1))

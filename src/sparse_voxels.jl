@@ -58,6 +58,7 @@ function SparseVoxelGrid{T1 <: AbstractVector, T2 <: Real}(points::Vector{T1}, v
     # Allocate ranges for the indices of points in each voxel based on the counts
     voxel_info = Dict{VoxelId, UnitRange{Int}}()
     current_index = 1
+    # TODO: Using keys(group_counts) is a workaround for inference in julia-0.5 - let's just iterate over the dictionary in the future
     for group_id in keys(group_counts)
         group_size = group_counts[group_id]
         voxel_info[group_id] = UnitRange(current_index, current_index+group_size-1)
@@ -76,26 +77,20 @@ function SparseVoxelGrid{T1 <: AbstractVector, T2 <: Real}(points::Vector{T1}, v
     return SparseVoxelGrid(voxel_size, voxel_info, point_indices)
 end
 
-function SparseVoxelGrid{T1 <: Real, T2 <: Real}(points::Matrix{T1}, voxel_size::SVector{3, T2})
-    npoints = size(points, 2)
-    new_data = Vector{SVector{3, T1}}()
+function SparseVoxelGrid{T1 <: Real}(points::Matrix{T1}, voxel_size)
+    ndims, npoints = size(points)
+    @assert ndims == 3
     new_data = reinterpret(SVector{3, T1}, points, (length(points) ÷ 3, ))
-    SparseVoxelGrid(new_data, voxel_size)
+    SparseVoxelGrid(new_data, get_voxel_size(voxel_size))
 end
 
-function SparseVoxelGrid{T1 <: Real, T2 <: Real}(points::Matrix{T1}, voxel_size::T2)
-    voxel_size_vector = get_voxel_size(voxel_size)
-    SparseVoxelGrid(points, voxel_size_vector)
+function SparseVoxelGrid{T1 <: AbstractVector}(points::Vector{T1}, voxel_size)
+    SparseVoxelGrid(points, get_voxel_size(voxel_size))
 end
 
-function SparseVoxelGrid{T1 <: AbstractVector, T2 <: Real}(points::Vector{T1}, voxel_size::T2)
-    voxel_size_vector = get_voxel_size(voxel_size)
-    SparseVoxelGrid(points, voxel_size_vector)
-end
-
-function get_voxel_size{T <: Real}(voxel_size::T)
-    SVector{3, T}(voxel_size, voxel_size, voxel_size)
-end
+get_voxel_size{T <: Real}(voxel_size::NTuple{3, T})  = SVector{3, T}(voxel_size)
+get_voxel_size{T <: Real}(voxel_size::T)             = SVector{3, T}(voxel_size, voxel_size, voxel_size)
+get_voxel_size{T <: Real}(voxel_size::SVector{3, T}) = voxel_size
 
 Base.length(grid::SparseVoxelGrid) = length(grid.voxel_info)
 Base.isempty(grid::SparseVoxelGrid) = isempty(grid.voxel_info)
