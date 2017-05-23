@@ -112,7 +112,7 @@ end
 
 Create the voxel id for a given point and voxel size.
 """
-@inline function make_voxel_id{T <: AbstractFloat}(point::AbstractVector, voxel_size::SVector{3, T})
+@inline function make_voxel_id{T <: Real}(point::AbstractVector, voxel_size::SVector{3, T})
     (floor(Int, point[1] / voxel_size[1]), floor(Int, point[2] / voxel_size[2]),
      floor(Int, point[3] / voxel_size[3]))
 end
