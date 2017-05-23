@@ -1,5 +1,3 @@
-using StaticArrays
-
 """
     rasterize_points(points, dx::AbstractFloat)
 
@@ -46,7 +44,7 @@ end
 """
 `rasterize_points{T <: AbstractVector}(points::Vector{T}, dx::AbstractFloat) -> Raster`
 
-Returns `Raster` of  points `pos` with quadratic cellsize `dx`
+Returns a `Raster` of `points` with quadratic cellsize `dx`.
 """
 function rasterize_points{T <: AbstractVector}(points::Vector{T}, dx::AbstractFloat)
     (xmin, xmax, ymin, ymax) = bounds(points)
