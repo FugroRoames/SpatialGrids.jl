@@ -4,7 +4,7 @@
 Rasterize points in 2D by a cell size `dx`.
 Returns a dictionary containing the indices points that are in a cell.
 """
-immutable Raster{T<:SVector,U<:Integer}
+struct Raster{T<:SVector,U<:Integer}
     pixels::Dict{Tuple{U,U}, Vector{U}}
     r_min::T
     r_max::T
@@ -13,7 +13,7 @@ end
 
 # from: https://github.com/andyferris/HeightOrderedGrid.jl/blob/master/src/HeightOrderedGrid.jl
 # as opposed to: SVector{N, Float64}(minimum(map(x->x[1], points)), minimum(map(x->x[2], points)), 0)
-function bounds{T}(points::Vector{T})
+function bounds(points::Vector{T}) where T
     xmin = typemax(eltype(eltype(T)))
     xmax = typemin(eltype(eltype(T)))
     ymin = typemax(eltype(eltype(T)))
@@ -39,14 +39,11 @@ function bounds{T}(points::Vector{T})
 
     return (xmin, xmax, ymin, ymax)
 end
-
-
 """
 `rasterize_points{T <: AbstractVector}(points::Vector{T}, dx::AbstractFloat) -> Raster`
-
 Returns a `Raster` of `points` with quadratic cellsize `dx`.
 """
-function rasterize_points{T <: AbstractVector}(points::Vector{T}, dx::AbstractFloat)
+function rasterize_points(points::Vector{T}, dx::Float64) where T <: AbstractVector
     (xmin, xmax, ymin, ymax) = bounds(points)
 
     if size(eltype(points))[1] == 2
@@ -61,6 +58,7 @@ function rasterize_points{T <: AbstractVector}(points::Vector{T}, dx::AbstractFl
 
     pixels = Dict{Tuple{UInt32, UInt32}, Vector{UInt32}}()
     inv_dx = 1.0/dx
+
     for i = 1:length(points)
         @inbounds p = points[i] - min_xy
         key = (floor(UInt32, p[1]*inv_dx), floor(UInt32, p[2]*inv_dx))
@@ -74,19 +72,19 @@ function rasterize_points{T <: AbstractVector}(points::Vector{T}, dx::AbstractFl
     return Raster(pixels,min_xy,max_xy,dx)
 end
 
-function rasterize_points{T <: Number}(points::Matrix{T}, dx::AbstractFloat)
-    @assert isbits(T)
+function rasterize_points(points::Matrix{T}, dx::AbstractFloat) where T <: Number
+    @assert isbitstype(T)
     ndim = size(points, 1)
     npoints = size(points, 2)
-    new_data = reinterpret(SVector{ndim, T}, points, (npoints,))
-    rasterize_points(new_data, dx)
+    new_data = reshape(reinterpret(SVector{ndim, T}, vec(points)), (npoints,))
+    rasterize_points(new_data[1:end], dx)
 end
 
 Base.keys(r::Raster) = keys(r.pixels)
 Base.values(r::Raster) = values(r.pixels)
 Base.getindex(r::Raster, ind) = r.pixels[ind]
 
-function Base.show{T,U}(io::IO, raster::Raster{T,U})
+function Base.show(io::IO, raster::Raster{T, U}) where {T, U}
     println(io, typeof(raster))
     println(io, "  Number of pixels: ", length(raster.pixels))
     print(io, "  Cellsize: ", raster.cellsize)
