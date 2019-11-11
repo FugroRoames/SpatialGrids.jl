@@ -1,6 +1,7 @@
 # SpatialGrids.jl
 
 [![Build Status](https://travis-ci.org/FugroRoames/SpatialGrids.jl.svg?branch=master)](https://travis-ci.org/FugroRoames/SpatialGrids.jl)
+[![Build status](https://ci.appveyor.com/api/projects/status/6der3wi6ktc9jo7b?svg=true)](https://ci.appveyor.com/project/msbahal/spatialgrids-jl)
 [![codecov](https://codecov.io/gh/FugroRoames/SpatialGrids.jl/branch/master/graph/badge.svg)](https://codecov.io/gh/FugroRoames/SpatialGrids.jl)
 
 **SpatialGrids** provides 2D and 3D grid structures for working with point cloud data.
