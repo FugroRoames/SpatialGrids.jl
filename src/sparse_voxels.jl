@@ -44,7 +44,7 @@ function SparseVoxelGrid(points::Vector{T1}, voxel_size::SVector{3, T2}) where {
     # In order to avoid allocating a vector for each voxel, we construct the data structure in a backward-looking order.
 
     # Assign each point to a voxel id
-    voxel_ids = Vector{VoxelId}(undef,npoints)
+    voxel_ids = Vector{VoxelId}(undef, npoints)
     for j = 1:npoints
         @inbounds voxel_ids[j] = make_voxel_id(points[j], voxel_size)
     end
@@ -66,7 +66,7 @@ function SparseVoxelGrid(points::Vector{T1}, voxel_size::SVector{3, T2}) where {
     end
 
     # Place indices for points into the appropriate index range for the associated voxel
-    point_indices = Vector{Int}(undef,npoints)
+    point_indices = Vector{Int}(undef, npoints)
     for j = 1:npoints
         id = voxel_ids[j]
         index_in_group = group_counts[id]
@@ -79,7 +79,7 @@ end
 function SparseVoxelGrid(points::Matrix{T1}, voxel_size) where T1 <: Real
     ndims, npoints = size(points)
     @assert ndims == 3
-    new_data = reshape(reinterpret(SVector{3,T1}, vec(points)),(length(points) ÷ 3, ))
+    new_data = reshape(reinterpret(SVector{3, T1}, vec(points)), (length(points) ÷ 3, ))
     SparseVoxelGrid(new_data[1:end], get_voxel_size(voxel_size))
 end
 
@@ -104,7 +104,7 @@ end
 
 """
     make_voxel_id(point::AbstractVector, voxel_size::SVector{3,AbstractFloat})
-    =(v.voxel_info)
+
 Create the voxel id for a given point and voxel size.
 """
 @inline function make_voxel_id(point::AbstractVector, voxel_size::SVector{3, T}) where T <: Real
@@ -128,7 +128,6 @@ function Base.iterate(v::SparseVoxelGrid, state=(v.voxel_info, 1))
 end
 
 Base.eltype(::SparseVoxelGrid) = Voxel
-
 
 function Base.getindex(grid::SparseVoxelGrid, id::VoxelId)
     Voxel(id, grid.voxel_info[id], grid.point_indices)
