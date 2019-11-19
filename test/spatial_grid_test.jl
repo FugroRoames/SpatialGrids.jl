@@ -1,6 +1,6 @@
 @testset "SparseVoxelGrid tests" begin
     # Create points for a uniformly spaced 4x4x4 grid
-    x = collect(linspace(0.0, 3.0, 3))
+    x = collect(range(0.0, stop=3.0, length=3))
     cnt = 1
     points2d = zeros(2, 27)
     points3d = zeros(3, 27)
@@ -14,6 +14,7 @@
     @testset "Rasterizer" begin
         # Test standard uniformly sized voxels
         d2d = rasterize_points(points2d, 1.0)
+
         [@test length(r) == 3 for r in values(d2d)]
         d3d = rasterize_points(points3d, 1.0)
         [@test length(r) == 3 for r in values(d3d)]
@@ -35,7 +36,11 @@
         @test haskey(grid, (0,0,0)) == true
         @test length(grid) == 27
         @test length(collect(grid)) == 27
-        [@test length(collect(voxel)) == 1 for voxel in grid]
+    
+        for voxel in grid
+            @test length(collect(voxel_size)) == 1
+        end
+
         @test voxel_center(grid, (1, 1, 1)) == SVector{3,Float64}(0.5, 0.5, 0.5)
         @test length(collect(SparseVoxelGrid(points3d, (2.0, 2.5, 4.0)))) == 4
         @test length(collect(SparseVoxelGrid(points3d, SVector(2.0, 2.5, 4.0)))) == 4
@@ -60,6 +65,7 @@
 
         grid = SparseVoxelGrid(points3d, 1.5)
         voxel_list = [(1,1,1), (1,2,1), (2,2,2), (10,10,10)]
+
         @test length(collect(in_cuboid(grid, voxel_list[1], 2))) == 26
         @test length(collect(in_cuboid(grid, voxel_list[2], 2))) == 26
         @test length(collect(in_cuboid(grid, voxel_list[3], 2))) == 26
@@ -70,8 +76,8 @@
         io = IOBuffer()
         voxel = collect(grid)[1]
         cuboid = in_cuboid(grid, (0,0,0), radius)
-        show(io, grid)
-        show(io, voxel)
-        show(io, cuboid)
+        @show(io, grid)
+        @show(io, voxel)
+        @show(io, cuboid)
     end
 end

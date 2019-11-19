@@ -1,5 +1,5 @@
 using SpatialGrids
 using StaticArrays
-using Base.Test
+using Test
 
 include("spatial_grid_test.jl")
