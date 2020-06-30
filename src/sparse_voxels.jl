@@ -134,11 +134,11 @@ function Base.getindex(grid::SparseVoxelGrid, id::VoxelId)
 end
 
 
-function Base.iterate(v::Voxel, state=(v,1))
+function Base.iterate(v::Voxel, state=1)
     if state > length(v.point_index_range)
         return nothing
     end
-    return v.all_point_indices[v.point_index_range[state[2]]], state[2] + 1
+    return v.all_point_indices[v.point_index_range[state]], state + 1
 end
 
 
