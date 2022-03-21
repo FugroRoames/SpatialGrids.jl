@@ -1,7 +1,7 @@
 name = "SpatialGrids"
 uuid = "3ce1bdb9-727b-5794-a8c0-19c5c87cd16a"
 authors = ["msb <mandeep.bahal@roames.com.au>"]
-version = "1.0.0"
+version = "1.0.1"
 
 [deps]
 StaticArrays = "90137ffa-7385-5640-81b9-e52037218182"
@@ -9,4 +9,4 @@ Test = "8dfed614-e22c-5e08-85e1-65c5234f0b40"
 
 [compat]
 julia = "1"
-StaticArrays = "0.12"
+StaticArrays = "0.12, 1.0"
