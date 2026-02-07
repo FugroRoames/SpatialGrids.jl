@@ -38,7 +38,7 @@ struct SparseVoxelGrid{T <: Real}
     point_indices::Vector{Int}
 end
 
-function SparseVoxelGrid(points::Vector{T1}, voxel_size::SVector{3, T2}) where {T1 <: AbstractVector, T2 <: Real}
+function SparseVoxelGrid(points::AbstractVector{T1}, voxel_size::SVector{3, T2}) where {T1 <: AbstractVector, T2 <: Real}
     npoints = length(points)
 
     # In order to avoid allocating a vector for each voxel, we construct the data structure in a backward-looking order.
@@ -83,7 +83,7 @@ function SparseVoxelGrid(points::Matrix{T1}, voxel_size) where T1 <: Real
     SparseVoxelGrid(new_data[1:end], get_voxel_size(voxel_size))
 end
 
-function SparseVoxelGrid(points::Vector{T1}, voxel_size) where T1 <: AbstractVector
+function SparseVoxelGrid(points::AbstractVector{T1}, voxel_size) where T1 <: AbstractVector
     SparseVoxelGrid(points, get_voxel_size(voxel_size))
 end
 
